@@ -1,0 +1,50 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "type": "gdb",
+        "request": "launch",
+        "name": "Launch gdb 1",
+        "target": "./build/masterpiec.elf",
+        "cwd": "${workspaceFolder}",
+        "gdbpath": "C:\\tools\\esptools\\tools\\xtensa-esp32-elf\\esp-2019r2-8.2.0\\xtensa-esp32-elf\\bin\\xtensa-esp32-elf-gdb.exe",
+        "autorun": 
+        [
+            "target remote :3333",
+            "mon reset halt",
+            "flushregs",
+            "thb app_main",
+            "c"
+        ],
+        //"preLaunchTask": "openocd"
+    },
+      {
+        "type": "espidf",
+        "name": "Launch ESP-IDF debug",
+        "request": "launch",
+        "env": {
+                "PYTHONPATH": "${command:espIdf.getExtensionPath}/esp_debug_adapter/debug_adapter"
+            },
+      },
+      {
+        "name": "GDB 3",
+        "type":"cppdbg",
+        "request": "launch",
+        "miDebuggerPath": "C:\\tools\\esptools\\tools\\xtensa-esp32-elf\\esp-2019r2-8.2.0\\xtensa-esp32-elf\\bin\\xtensa-esp32-elf-gdb.exe",
+        "program": "${workspaceRoot}/build/masterpiec.elf",
+        "avoidWindowsConsoleRedirection": false,
+        //"miDebuggerServerAddress": "localhost:3333",
+        "cwd": ".",
+        "args":[],
+        "MIMode": "gdb",
+        "miDebuggerArgs": "",
+        "setupCommands": [
+          {"text" : "target remote :3333"},
+          {"text" : "mon reset halt"},
+          {"text": "flushregs"},
+          {"text": "thb app_main"},
+          {"text": "c", "ignoreFailures": true}
+        ],
+      }
+    ]
+  

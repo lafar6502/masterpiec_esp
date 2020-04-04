@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "task.h": "c",
+        "u8g2_esp32_hal.h": "c"
+    },
+    "cmake.configureOnOpen": false
+}
