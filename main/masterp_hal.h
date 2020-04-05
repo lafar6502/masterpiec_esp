@@ -1,0 +1,4 @@
+#ifndef _MASTERP_HAL_INCLUDED_
+#define _MASTERP_HAL_INCLUDED_
+
+#endif

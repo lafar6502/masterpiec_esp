@@ -47,7 +47,7 @@ void app_main(void)
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     //i2cscan(); need to disable or display will not show...
     vTaskDelay(1000 / portTICK_PERIOD_MS);
-    //initializeDisplay2();
+    initializeDisplay2();
     printf("display inited\n");
     printf("portTICK_PERIOD_MS is %d, portTICK_RATE_MS is %d\n", portTICK_PERIOD_MS, portTICK_RATE_MS);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
