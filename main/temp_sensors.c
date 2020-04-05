@@ -16,7 +16,7 @@ const char* TAG = "temp_sensors";
 
 void scanOneWire() {
     gpio_num_t gpio = ONEWIRE_PIN;
-
+    //not needed gpio_pad_select_gpio(gpio);
     gpio_config_t io_conf;
     io_conf.mode = GPIO_MODE_OUTPUT;
     io_conf.pull_down_en = 0;
@@ -30,6 +30,8 @@ void scanOneWire() {
     }
     
 
+    gpio_set_level(gpio, 1); //we need this initially for first scan to work
+    //vTaskDelay(100/portTICK_PERIOD_MS);
 
     onewire_search_t srch;
     onewire_search_start(&srch);
@@ -45,17 +47,7 @@ void scanOneWire() {
     
     printf("found %d devices\r\n", devs);
 
-        onewire_search_start(&srch);
-    devs =0;
-    while(true) {
-        onewire_addr_t addr = onewire_search_next(&srch, gpio);
-        if (addr == ONEWIRE_NONE) {
-            printf("end of search\n");
-            break;
-        }
-        devs++;
-    }
-    
+     
     printf("found %d devices\r\n", devs);
 
 
