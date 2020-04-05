@@ -11,9 +11,25 @@
 
 
 const char* TAG = "temp_sensors";
+#define ONEWIRE_PIN GPIO_NUM_25
+#define MAX6675_CS_PIN GPIO_NUM_4
 
 void scanOneWire() {
-    gpio_num_t gpio = GPIO_NUM_5;
+    gpio_num_t gpio = ONEWIRE_PIN;
+
+    gpio_config_t io_conf;
+    io_conf.mode = GPIO_MODE_OUTPUT;
+    io_conf.pull_down_en = 0;
+    io_conf.pull_up_en = 1;
+    io_conf.intr_type = 0;
+    io_conf.pin_bit_mask = 1ULL << gpio;
+    esp_err_t res = gpio_config(&io_conf);
+    if (res != ESP_OK) {
+        printf("error gpio init");
+        return;
+    }
+    
+
 
     onewire_search_t srch;
     onewire_search_start(&srch);
@@ -28,6 +44,20 @@ void scanOneWire() {
     }
     
     printf("found %d devices\r\n", devs);
+
+        onewire_search_start(&srch);
+    devs =0;
+    while(true) {
+        onewire_addr_t addr = onewire_search_next(&srch, gpio);
+        if (addr == ONEWIRE_NONE) {
+            printf("end of search\n");
+            break;
+        }
+        devs++;
+    }
+    
+    printf("found %d devices\r\n", devs);
+
 
     ds18x20_addr_t addrs[8];
 
@@ -53,7 +83,7 @@ void spi_therm_init(void) {
   spi_device_interface_config_t devCfg={
     .mode = 0,
     .clock_speed_hz = 1000*1000,
-    .spics_io_num=GPIO_NUM_5,
+    .spics_io_num=MAX6675_CS_PIN,
     .queue_size=3
   };
 
