@@ -31,8 +31,10 @@ esp_err_t setupRotaryEncoderInput();
 //we have rotary encoder/button handling (on interrupts) where the handlers
 //post events to a queue.
 //the queue is handled by ui handling task
-void setupUIEventQueue();
+void mpuiHandlerTask(void*);
 
+
+esp_err_t initializeMPUI();
 
 void defaultMPUIEventHandler(MPUIEvent ev);
 

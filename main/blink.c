@@ -17,6 +17,7 @@
 #include <sys/time.h>
 #include "ui_screen.h"
 #include "temp_sensors.h"
+#include "ui_control.h"
 
 /* Can use project configuration menu (idf.py menuconfig) to choose the GPIO to blink,
    or you can edit the following line and set a number here.
@@ -53,6 +54,7 @@ void app_main(void)
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     scanOneWire();
     initThermocoupleSensors();
+    ESP_ERROR_CHECK(initializeMPUI());
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
     while(1) {
