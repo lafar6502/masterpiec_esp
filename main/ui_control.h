@@ -25,7 +25,7 @@ typedef struct MPUIEvent {
 extern QueueHandle_t g_mpuiQueue;
 
 
-void setupRotaryEncoderInput();
+esp_err_t setupRotaryEncoderInput();
 
 //how does the event queue work
 //we have rotary encoder/button handling (on interrupts) where the handlers
@@ -33,5 +33,7 @@ void setupRotaryEncoderInput();
 //the queue is handled by ui handling task
 void setupUIEventQueue();
 
+
+void defaultMPUIEventHandler(MPUIEvent ev);
 
 #endif
