@@ -8,6 +8,8 @@
 #include <freertos/task.h>
 #include <stdio.h>
 #include "sdkconfig.h"
+#include "hwsetup.h"
+
 
 #define SDA_PIN 21
 #define SCL_PIN 22

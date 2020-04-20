@@ -8,11 +8,10 @@
 #include "esp_system.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
-
+#include "hwsetup.h"
 
 const char* TAG = "temp_sensors";
-#define ONEWIRE_PIN GPIO_NUM_25
-#define MAX6675_CS_PIN GPIO_NUM_4
+
 
 void scanOneWire() {
     gpio_num_t gpio = ONEWIRE_PIN;
