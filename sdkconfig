@@ -120,10 +120,13 @@ CONFIG_PARTITION_TABLE_MD5=y
 # end of Partition Table
 
 #
-# Example Configuration
+# Masterpiec Configuration
 #
 CONFIG_BLINK_GPIO=5
-# end of Example Configuration
+CONFIG_ROT_ENC_A_GPIO=34
+CONFIG_ROT_ENC_B_GPIO=35
+CONFIG_ROT_ENC_BTN_GPIO=33
+# end of Masterpiec Configuration
 
 #
 # Compiler options
