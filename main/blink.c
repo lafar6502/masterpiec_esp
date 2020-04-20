@@ -45,16 +45,16 @@ void app_main(void)
     gpio_pad_select_gpio(BLINK_GPIO);
     setupTimer(BLINK_GPIO);
     initPowerControlModule();
-    vTaskDelay(1000 / portTICK_PERIOD_MS);
     //i2cscan(); need to disable or display will not show...
     vTaskDelay(1000 / portTICK_PERIOD_MS);
+    ESP_ERROR_CHECK(initializeMPUI());
     initializeDisplay2();
     printf("display inited\n");
     printf("portTICK_PERIOD_MS is %d, portTICK_RATE_MS is %d\n", portTICK_PERIOD_MS, portTICK_RATE_MS);
     vTaskDelay(1000 / portTICK_PERIOD_MS);
     scanOneWire();
     initThermocoupleSensors();
-    ESP_ERROR_CHECK(initializeMPUI());
+    
     /* Set the GPIO as a push/pull output */
     gpio_set_direction(BLINK_GPIO, GPIO_MODE_OUTPUT);
     while(1) {

@@ -8,7 +8,7 @@
 #include "ui_control.h"
 
 //ESP_EVENT_DEFINE_BASE(MP_UI_EVENT);
-const char* TAG = "ui";
+static const char* TAG = "ui";
 
 const TickType_t IdleDelay = 5000 / portTICK_PERIOD_MS;
 
@@ -26,6 +26,7 @@ void mpuiHandlerTask(void * pvParameters)
     if (g_mpuiQueue == NULL) {
         //fatal error
         ESP_LOGE(TAG, "Failed to init ui queue");
+        return;
     }
     ESP_ERROR_CHECK(setupRotaryEncoderInput());
 
@@ -53,11 +54,12 @@ void mpuiHandlerTask(void * pvParameters)
 
 esp_err_t initializeMPUI() {
     TaskHandle_t xHandle = NULL;
-    BaseType_t res = xTaskCreate(mpuiHandlerTask, "UI", 200, NULL, tskIDLE_PRIORITY, &xHandle );
+    BaseType_t res = xTaskCreate(mpuiHandlerTask, "UI", 1000, NULL, tskIDLE_PRIORITY, &xHandle );
     if (res != pdPASS) {
-        ESP_LOGE("TAG", "Failed to create ui task %x", res);
+        ESP_LOGE(TAG, "Failed to create ui task %x", res);
         return ESP_OK;
     }
+    ESP_LOGD(TAG, "Created ui task");
     return ESP_OK;
 
 }

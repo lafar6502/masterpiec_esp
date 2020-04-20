@@ -10,7 +10,7 @@
 #include "driver/gpio.h"
 #include "hwsetup.h"
 
-const char* TAG = "temp_sensors";
+static const char* TAG = "temp_sensors";
 
 
 void scanOneWire() {
