@@ -44,6 +44,7 @@ void app_main(void)
    uint64_t mstart = tstart;
     gpio_pad_select_gpio(BLINK_GPIO);
     setupTimer(BLINK_GPIO);
+    ESP_ERROR_CHECK(gpio_install_isr_service(0));//global isr service install so modules dont have to do it
     initPowerControlModule();
     //i2cscan(); need to disable or display will not show...
     vTaskDelay(1000 / portTICK_PERIOD_MS);

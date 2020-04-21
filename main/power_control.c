@@ -49,11 +49,11 @@ void initPowerControlModule()
         return;
     }
     //install gpio isr service
-    res = gpio_install_isr_service(0);
+    /*res = gpio_install_isr_service(0);
     if (res != ESP_OK) {
         printf("error gpio isr_service");
         return;
-    }
+    }*/
     //hook isr handler for specific gpio pin
     res = gpio_isr_handler_add(DET_PIN, gpio_isr_handler, (void*) DET_PIN);
     if (res != ESP_OK) {
