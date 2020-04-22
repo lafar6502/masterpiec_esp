@@ -129,13 +129,14 @@ const unsigned char ttable[7][4] = {
 
 unsigned char g_rot_state = R_START;
 
-unsigned char rotary_process(unsigned char pinA, unsigned char pinB)
+int8_t  rotary_process(unsigned char pinA, unsigned char pinB)
 {
   // Grab state of input pins.
   unsigned char pinstate = (pinB << 1) |pinA;
   g_rot_state = ttable[g_rot_state & 0xf][pinstate];
   // Return emit bits, ie the generated event.
-  return g_rot_state & 0x30;
+  unsigned char c = g_rot_state & 0x30;
+  return c == DIR_CW ? 1 : c == DIR_CCW ? -1 : 0;
 }
 
 
@@ -174,7 +175,7 @@ int8_t read_rotary_2(unsigned char pinA, unsigned char pinB)
     static int8_t rot_enc_table[]= {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0};
     static uint8_t state = 0;
     state <<= 2;
-    state |= (pinA ? 2 : 0 | pinB ? 1 : 0);
+    state |= ((pinA ? 2 : 0) | (pinB ? 1 : 0));
     state &= 0x0f;
     if (pinA == pinB) 
     {

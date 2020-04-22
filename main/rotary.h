@@ -13,7 +13,7 @@
 #define ROT_BTN_RELEASE 0x06
 
 
-unsigned char rotary_process(unsigned char pinA, unsigned char pinB);
+int8_t rotary_process(unsigned char pinA, unsigned char pinB);
 
 int8_t read_rotary(unsigned char pinA, unsigned char pinB);
 int8_t read_rotary_2(unsigned char pinA, unsigned char pinB);

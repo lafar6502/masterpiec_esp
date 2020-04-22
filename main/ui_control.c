@@ -47,14 +47,14 @@ static void rotary_encoder_isr(void * args)
         return;
     }
 
-    MPUIEvent ev = {MPUI_DOWN, 0};
+    MPUIEvent ev = {MPUI_NONE, 0};
     unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
     unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
     
-    int8_t dir = read_rotary(pina, pinb);
+    int8_t dir = read_rotary_2(pina, pinb);
     int n = gpio_get_level(CONFIG_DEBUG_OUT_GPIO);
     if (dir != 0) gpio_set_level(CONFIG_DEBUG_OUT_GPIO, n ? 0 : 1);
-    
+    //dir = 1;
     if (dir == 0) {
         //ESP_LOGD(TAG, "rotary event, no movement");
         return;
@@ -75,6 +75,8 @@ static void rotary_encoder_isr(void * args)
     }
     
     ev.Position = g_position;
+    //ev.Position = cnt;
+    //ev.Type = pina << 1 | pinb;
     if (ev.Type != MPUI_NONE) 
     {
         BaseType_t task_woken = pdFALSE;
@@ -133,13 +135,21 @@ void mpuiHandlerTask(void * pvParameters)
     uint8_t idleSent = 0;
 
     MPUIEvent event;;
-        
+    int pos = 0;
     while (1)
     {
         // Wait for incoming events on the event queue.
         if (xQueueReceive(g_rotaryQueue, &event, IdleDelay) == pdTRUE)
         {
-            ESP_LOGD(TAG, "Got rotary event %d, cnt %d", (int) event.Type, event.Position);
+            unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
+            unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
+            uint8_t p0 = pina << 1 | pinb;
+            ESP_LOGD(TAG, "Got rotary event %d - %d, cnt %d", (int) event.Type, p0, event.Position);
+            //int8_t d0 = rotary_process(pina, pinb);
+            //int8_t d1 = read_rotary(pina, pinb);
+            //int8_t d2 = read_rotary_2(pina, pinb);
+            //pos += d0;
+            //ESP_LOGD(TAG, "DIR %d %d %d, pos %d", d0, d1, d2, pos);
             //unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
             //unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
             //unsigned char dir = rotary_process(pina, pinb);
