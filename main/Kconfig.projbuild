@@ -27,5 +27,19 @@ menu "Masterpiec Configuration"
         default 33
         help
             GPIO number (IOxx) from which to sample the Rotary Encoder 'B' output.
-        
+            
+    config DEBUG_OUT_GPIO
+        int "Debug GPIO"
+        range 0 39
+        default 25
+        help
+            For output of debug signal.
+            
+    config ZERO_DETECT_GPIO
+        int "Zero detector input GPIO"
+        range 0 39
+        default 32
+        help
+            AC zero detector input.
+            
 endmenu

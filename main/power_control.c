@@ -4,8 +4,8 @@
 #include "esp_intr_alloc.h"
 #include "esp_timer.h"
 
-#define DET_PIN 32
-#define REP_PIN 25
+#define DET_PIN CONFIG_ZERO_DETECT_GPIO
+#define REP_PIN CONFIG_DEBUG_OUT_GPIO
 
 uint32_t g_powerCycles;
 

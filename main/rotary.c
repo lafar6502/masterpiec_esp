@@ -139,6 +139,50 @@ unsigned char rotary_process(unsigned char pinA, unsigned char pinB)
 }
 
 
+static uint8_t prevNextCode = 0;
+static uint16_t store=0;
+
+int8_t read_rotary(unsigned char pinA, unsigned char pinB) {
+  static int8_t rot_enc_table[] = {0,1,1,0,1,0,0,1,1,0,0,1,0,1,1,0};
+
+  prevNextCode <<= 2;
+  if (pinA) prevNextCode |= 0x02;
+  if (pinB) prevNextCode |= 0x01;
+  prevNextCode &= 0x0f;
+
+   // If valid then store as 16 bit data.
+   if  (rot_enc_table[prevNextCode] ) {
+      store <<= 4;
+      store |= prevNextCode;
+      //if (store==0xd42b) return 1;
+      //if (store==0xe817) return -1;
+      if ((store&0xff)==0x2b) return -1;
+      if ((store&0xff)==0x17) return 1;
+   }
+   return 0;
+}
+
+// second method of reading rotary position
+// step has been made if both pinA and pinB have the same value
+// if the values are different then it's a transition and we're waiting for a state change
+// 00->01->11   00->10->11  11->10->00  11->01->00
+// invalid: 00->11, 11->00, 01->10, 10->01
+// what if we're stuck in a transition state 01 or 10 and nothing happens for some time? we should wait for 00 or 11 
+// 00->01->00 - no movement. 00->10->00, 11->10->11, 11->01->11
+int8_t read_rotary_2(unsigned char pinA, unsigned char pinB) 
+{
+    static int8_t rot_enc_table[]= {0,1,-1,0,-1,0,0,1,1,0,0,-1,0,-1,1,0};
+    static uint8_t state = 0;
+    state <<= 2;
+    state |= (pinA ? 2 : 0 | pinB ? 1 : 0);
+    state &= 0x0f;
+    if (pinA == pinB) 
+    {
+        return rot_enc_table[state];
+    }
+    return 0;
+}
+
 //now ESP32 specific apis
 
 #define ROT_ENC_A_GPIO (CONFIG_ROT_ENC_A_GPIO)

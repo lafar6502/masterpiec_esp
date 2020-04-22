@@ -69,7 +69,7 @@ void app_main(void)
         /* Blink on (output high) */
 	    printf("Turning on the LED\n");
         //gpio_set_level(BLINK_GPIO, 1);
-        vTaskDelay(1000 / portTICK_PERIOD_MS);
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
         uint64_t dt = (esp_timer_get_time() - tstart) / 1000;
         double freq = (double) g_powerCycles / dt;
         freq *= 1000.0;

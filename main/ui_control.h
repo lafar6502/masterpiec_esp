@@ -11,15 +11,18 @@
 
 
 typedef enum UI_EVENT_TYPE {
+    MPUI_NONE,
     MPUI_UP,
     MPUI_DOWN,
     MPUI_BTNPRESS,
     MPUI_BTNLONGPRESS,
     MPUI_IDLE
+    
 }  UI_EVENT_TYPE;
 
 typedef struct MPUIEvent {
     UI_EVENT_TYPE Type;
+    int Position;
 }  MPUIEvent;
 
 extern QueueHandle_t g_mpuiQueue;

@@ -15,5 +15,6 @@
 
 unsigned char rotary_process(unsigned char pinA, unsigned char pinB);
 
-
+int8_t read_rotary(unsigned char pinA, unsigned char pinB);
+int8_t read_rotary_2(unsigned char pinA, unsigned char pinB);
 #endif
