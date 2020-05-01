@@ -3,6 +3,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/timers.h"
 #include "esp_err.h"
 #include <esp_log.h>
 #include "driver/gpio.h"
@@ -27,6 +28,14 @@ const TickType_t IdleDelay = 5000 / portTICK_PERIOD_MS;
 QueueHandle_t g_rotaryQueue;
 int g_position = 0;
 
+void button_change_handler(void* a1, uint32_t a2) {
+    uint64_t us = esp_timer_get_time() % 0xFFFF;
+    uint32_t elaps = us - a2;
+    uint8_t bstate = gpio_get_level(ROT_BTN_GPIO);
+    ESP_LOGD(TAG, "Button defer handler %d, elaps %d, b: %d", a1 == NULL ? 1 : 2, elaps, (int) bstate);
+    if (a1 == NULL) xTimerPendFunctionCall(button_change_handler, button_change_handler, 0, pdTICKS_TO_MS(10));
+}
+
 static void rotary_encoder_isr(void * args)
 {
     static uint32_t cnt=0;
@@ -42,39 +51,48 @@ static void rotary_encoder_isr(void * args)
     lastIntr = us;
     lastPin = pin;
     cnt++;
+    BaseType_t task_woken = pdFALSE;
+    MPUIEvent ev = {MPUI_NONE, 0, us};
+    
     if (pin == ROT_BTN_GPIO) {
+        ev.Position = g_position;
+        ev.Type = MPUI_BTNPRESS;
         //handle btn
-        return;
+        BaseType_t bt = xTimerPendFunctionCallFromISR(button_change_handler, NULL, us & 0xFFFF, &task_woken);
+        if (task_woken)
+        {
+            portYIELD_FROM_ISR();
+        }
     }
-
-    MPUIEvent ev = {MPUI_NONE, 0};
-    unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
-    unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
-    
-    int8_t dir = read_rotary_2(pina, pinb);
-    int n = gpio_get_level(CONFIG_DEBUG_OUT_GPIO);
-    if (dir != 0) gpio_set_level(CONFIG_DEBUG_OUT_GPIO, n ? 0 : 1);
-    //dir = 1;
-    if (dir == 0) {
-        //ESP_LOGD(TAG, "rotary event, no movement");
-        return;
+    else 
+    {
+        unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
+        unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
+        
+        int8_t dir = read_rotary_2(pina, pinb);
+        int n = gpio_get_level(CONFIG_DEBUG_OUT_GPIO);
+        if (dir != 0) gpio_set_level(CONFIG_DEBUG_OUT_GPIO, n ? 0 : 1);
+        //dir = 1;
+        if (dir == 0) {
+            //ESP_LOGD(TAG, "rotary event, no movement");
+            return;
+        }
+        if (dir == 1) {
+            //ESP_LOGD(TAG, "ROT cw");
+            g_position++;
+            ev.Type = MPUI_DOWN;
+        }
+        else if (dir == -1) {
+            //ESP_LOGD(TAG, "ROT ccw");
+            g_position--;
+            ev.Type = MPUI_UP;
+        }
+        else {
+            //error
+            return;
+        }
+        ev.Position = g_position;
     }
-    if (dir == 1) {
-        //ESP_LOGD(TAG, "ROT cw");
-        g_position++;
-        ev.Type = MPUI_DOWN;
-    }
-    else if (dir == -1) {
-        //ESP_LOGD(TAG, "ROT ccw");
-        g_position--;
-        ev.Type = MPUI_UP;
-    }
-    else {
-        //error
-        return;
-    }
-    
-    ev.Position = g_position;
     //ev.Position = cnt;
     //ev.Type = pina << 1 | pinb;
     if (ev.Type != MPUI_NONE) 
@@ -141,10 +159,19 @@ void mpuiHandlerTask(void * pvParameters)
         // Wait for incoming events on the event queue.
         if (xQueueReceive(g_rotaryQueue, &event, IdleDelay) == pdTRUE)
         {
-            unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
-            unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
-            uint8_t p0 = pina << 1 | pinb;
-            ESP_LOGD(TAG, "Got rotary event %d - %d, cnt %d", (int) event.Type, p0, event.Position);
+            if (event.Type == MPUI_BTNPRESS)
+            {
+                ESP_LOGD(TAG, "Btn intr, delay %d", (int) (esp_timer_get_time() - event.Us));
+                //xTimerPendFunctionCall(button_change_handler, NULL, 0, pdMS_TO_TICKS(2));
+            }
+            else 
+            {
+                unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
+                unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
+                uint8_t p0 = pina << 1 | pinb;
+                ESP_LOGD(TAG, "Got rotary event %d - %d, cnt %d, delay %d", (int) event.Type, p0, event.Position, (int) (esp_timer_get_time() - event.Us));
+            }
+            
             //int8_t d0 = rotary_process(pina, pinb);
             //int8_t d1 = read_rotary(pina, pinb);
             //int8_t d2 = read_rotary_2(pina, pinb);

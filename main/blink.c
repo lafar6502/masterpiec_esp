@@ -74,6 +74,7 @@ void app_main(void)
         double freq = (double) g_powerCycles / dt;
         freq *= 1000.0;
         printf("Freq is so far %f, elapsed secs: %lld, ac %d\n", freq, (esp_timer_get_time() - mstart) / 1000000, g_powerCycles);
+        printf("Button is %d\n", (int) gpio_get_level(CONFIG_ROT_ENC_BTN_GPIO));
         
     }
 }

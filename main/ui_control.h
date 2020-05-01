@@ -23,6 +23,7 @@ typedef enum UI_EVENT_TYPE {
 typedef struct MPUIEvent {
     UI_EVENT_TYPE Type;
     int Position;
+    uint64_t Us;
 }  MPUIEvent;
 
 extern QueueHandle_t g_mpuiQueue;
