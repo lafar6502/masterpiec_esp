@@ -1,13 +1,13 @@
 #ifndef _MASTERPIEC_UI_CONTROL_H_INCLUDED_
 #define _MASTERPIEC_UI_CONTROL_H_INCLUDED_
 
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
-#include "freertos/queue.h"
+
+#include "esp_event.h"
+#include "esp_timer.h"
 
 //ui events, ui event queue, handling of rotary input
 
-//ESP_EVENT_DECLARE_BASE(MPUI_EVENT);
+ESP_EVENT_DECLARE_BASE(MPUI_EVENT); //for events of type MPUIEvent declared below
 
 
 typedef enum UI_EVENT_TYPE {
@@ -29,10 +29,7 @@ typedef struct MPUIEvent {
     uint64_t Us;
 }  MPUIEvent;
 
-extern QueueHandle_t g_mpuiQueue;
 
-
-esp_err_t setupRotaryEncoderInput();
 
 //how does the event queue work
 //we have rotary encoder/button handling (on interrupts) where the handlers

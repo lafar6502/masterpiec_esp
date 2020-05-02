@@ -14,6 +14,7 @@
 #include "timerwire.h"
 #include "power_control.h"
 #include "esp_timer.h"
+#include "esp_event.h"
 #include <sys/time.h>
 #include "ui_screen.h"
 #include "temp_sensors.h"
@@ -41,6 +42,7 @@ void app_main(void)
        functions.)
     */
    tstart = esp_timer_get_time();
+   ESP_ERROR_CHECK(esp_event_loop_create_default());
    uint64_t mstart = tstart;
     gpio_pad_select_gpio(BLINK_GPIO);
     setupTimer(BLINK_GPIO);

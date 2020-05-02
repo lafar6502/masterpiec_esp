@@ -10,7 +10,7 @@
 #include "ui_control.h"
 #include "rotary.h"
 
-//ESP_EVENT_DEFINE_BASE(MP_UI_EVENT);
+
 static const char* TAG = "ui";
 
 const TickType_t IdleDelay = 5000 / portTICK_PERIOD_MS;
@@ -29,7 +29,7 @@ QueueHandle_t g_rotaryQueue;
 esp_timer_handle_t g_rotBtnTimer;
 esp_timer_handle_t g_rotEncTimer;
 
-
+ESP_EVENT_DEFINE_BASE(MPUI_EVENT);
 
 void button_delayed_handler(void* p) 
 {
@@ -46,6 +46,7 @@ void button_delayed_handler(void* p)
         lastPress = us;
         ev.Type = MPUI_BTNDOWN;
         xQueueSend(g_rotaryQueue, &ev, 0);
+        
     } 
     else 
     { //released
@@ -219,7 +220,7 @@ void mpuiHandlerTask(void * pvParameters)
     ESP_LOGD(TAG, "Starting event queue");
     uint8_t idleSent = 0;
 
-    MPUIEvent event;;
+    MPUIEvent event;
     int pos = 0;
     unsigned char pina, pinb;
     while (1)
@@ -227,6 +228,7 @@ void mpuiHandlerTask(void * pvParameters)
         // Wait for incoming events on the event queue.
         if (xQueueReceive(g_rotaryQueue, &event, IdleDelay) == pdTRUE)
         {
+            idleSent = 0;
             switch(event.Type) 
             {
                 case MPUI_BTNDOWN:
@@ -247,27 +249,17 @@ void mpuiHandlerTask(void * pvParameters)
                 default:
                     break;
             }
+            defaultMPUIEventHandler(event);
         }
         else
         {
             ESP_LOGD(TAG, "Queue idle");
-            // Poll current position and direction
-            /*rotary_encoder_state_t state = { 0 };
-            ESP_ERROR_CHECK(rotary_encoder_get_state(&info, &state));
-            ESP_LOGI(TAG, "ENC Poll: position %d, direction %s", state.position,
-                     state.direction ? (state.direction == ROTARY_ENCODER_DIRECTION_CLOCKWISE ? "CW" : "CCW") : "NOT_SET");
 
-            // Reset the device
-            if (RESET_AT && (state.position >= RESET_AT || state.position <= -RESET_AT))
-            {
-                ESP_LOGI(TAG, "ENC Reset");
-                ESP_ERROR_CHECK(rotary_encoder_reset(&info));
-            }*/
             if (!idleSent) {
                 //send simulated idle event
                 idleSent = 1;
-                //ev.Type = MPUI_IDLE;
-                //defaultMPUIEventHandler(ev);                
+                event.Type = MPUI_IDLE;
+                defaultMPUIEventHandler(event);                
             };
         }
     }
@@ -297,5 +289,8 @@ esp_err_t setupRotaryEncoderInput()
 
 
 void defaultMPUIEventHandler(MPUIEvent ev) {
-
+    esp_err_t res = esp_event_post(MPUI_EVENT, ev.Type, &ev, sizeof(MPUIEvent), 1);
+    if (res != ESP_OK) {
+        ESP_LOGE(TAG, "ui post fail %d", res);
+    }
 }
