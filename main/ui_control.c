@@ -26,14 +26,102 @@ const TickType_t IdleDelay = 5000 / portTICK_PERIOD_MS;
 #define RESET_AT          0      // Set to a positive non-zero number to reset the position if this value is exceeded
 
 QueueHandle_t g_rotaryQueue;
+esp_timer_handle_t g_rotBtnTimer;
+esp_timer_handle_t g_rotEncTimer;
+
+
+
+void button_delayed_handler(void* p) 
+{
+    static uint64_t lastPress = 0;
+    uint64_t us = esp_timer_get_time();
+    
+    uint8_t bstate = gpio_get_level(ROT_BTN_GPIO);
+    MPUIEvent ev = {MPUI_NONE, 0, us};
+    uint64_t prtime = us < lastPress ? lastPress - us : us - lastPress;   
+    ESP_LOGD(TAG, "Button delayed handler, elaps %ld, b: %d", (long int) prtime, (int) bstate);
+    
+    if (bstate == 0) 
+    {   //pressed
+        lastPress = us;
+        ev.Type = MPUI_BTNDOWN;
+        xQueueSend(g_rotaryQueue, &ev, 0);
+    } 
+    else 
+    { //released
+        
+        ev.Type = MPUI_BTNUP;
+        xQueueSend(g_rotaryQueue, &ev, 0);
+        if (lastPress != 0)
+        {
+            ev.Type = prtime < 3000 * 1000 ? MPUI_BTNPRESS : MPUI_BTNLONGPRESS;
+            xQueueSend(g_rotaryQueue, &ev, 0);
+        }
+        lastPress = 0;
+    }
+}
+
+
+
 int g_position = 0;
 
-void button_change_handler(void* a1, uint32_t a2) {
-    uint64_t us = esp_timer_get_time() % 0xFFFF;
-    uint32_t elaps = us - a2;
-    uint8_t bstate = gpio_get_level(ROT_BTN_GPIO);
-    ESP_LOGD(TAG, "Button defer handler %d, elaps %d, b: %d", a1 == NULL ? 1 : 2, elaps, (int) bstate);
-    if (a1 == NULL) xTimerPendFunctionCall(button_change_handler, button_change_handler, 0, pdTICKS_TO_MS(10));
+
+static void rotary_btn_isr(void* args) {
+    static uint64_t lastIntr = 0;
+    uint64_t us = esp_timer_get_time();
+    
+    if (us - lastIntr < 3000) {
+        return;
+    }
+    
+    lastIntr = us;
+    esp_err_t res = esp_timer_start_once(g_rotBtnTimer, 3 * 1000); //3ms
+    if (res != ESP_OK) 
+    {
+
+    }
+
+}
+
+void rotary_encoder_delayed_handler(void *p) {
+    static uint32_t cnt=0;
+    uint64_t us = esp_timer_get_time();
+    cnt++;
+
+    MPUIEvent ev = {MPUI_NONE, 0, us};
+    
+    unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
+    unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
+    
+    int8_t dir = read_rotary_2(pina, pinb);
+    int n = gpio_get_level(CONFIG_DEBUG_OUT_GPIO);
+    if (dir != 0) gpio_set_level(CONFIG_DEBUG_OUT_GPIO, n ? 0 : 1);
+    //dir = 1;
+    if (dir == 0) {
+        //ESP_LOGD(TAG, "ROT none");
+        return;
+    }
+    if (dir == 1) {
+        //ESP_LOGD(TAG, "ROT cw");
+        g_position++;
+        ev.Type = MPUI_DOWN;
+    }
+    else if (dir == -1) {
+        //ESP_LOGD(TAG, "ROT ccw");
+        g_position--;
+        ev.Type = MPUI_UP;
+    }
+    else {
+        //error
+        return;
+    }
+    ev.Position = g_position;
+    //ev.Position = cnt;
+    //ev.Type = pina << 1 | pinb;
+    if (ev.Type != MPUI_NONE) 
+    {
+        xQueueSend(g_rotaryQueue, &ev, 0);
+    }
 }
 
 static void rotary_encoder_isr(void * args)
@@ -44,66 +132,20 @@ static void rotary_encoder_isr(void * args)
     uint64_t us = esp_timer_get_time();
     uint8_t pin = (uint8_t) args;
     
-    if (us - lastIntr < 1000 && lastPin == pin) {
+    if (us - lastIntr < 1500 && lastPin == pin) {
         return;
     }
 
     lastIntr = us;
     lastPin = pin;
     cnt++;
-    BaseType_t task_woken = pdFALSE;
-    MPUIEvent ev = {MPUI_NONE, 0, us};
     
-    if (pin == ROT_BTN_GPIO) {
-        ev.Position = g_position;
-        ev.Type = MPUI_BTNPRESS;
-        //handle btn
-        BaseType_t bt = xTimerPendFunctionCallFromISR(button_change_handler, NULL, us & 0xFFFF, &task_woken);
-        if (task_woken)
-        {
-            portYIELD_FROM_ISR();
-        }
-    }
-    else 
+    esp_err_t res = esp_timer_start_once(g_rotEncTimer, 3 * 1000); //3ms
+    if (res != ESP_OK) 
     {
-        unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
-        unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
-        
-        int8_t dir = read_rotary_2(pina, pinb);
-        int n = gpio_get_level(CONFIG_DEBUG_OUT_GPIO);
-        if (dir != 0) gpio_set_level(CONFIG_DEBUG_OUT_GPIO, n ? 0 : 1);
-        //dir = 1;
-        if (dir == 0) {
-            //ESP_LOGD(TAG, "rotary event, no movement");
-            return;
-        }
-        if (dir == 1) {
-            //ESP_LOGD(TAG, "ROT cw");
-            g_position++;
-            ev.Type = MPUI_DOWN;
-        }
-        else if (dir == -1) {
-            //ESP_LOGD(TAG, "ROT ccw");
-            g_position--;
-            ev.Type = MPUI_UP;
-        }
-        else {
-            //error
-            return;
-        }
-        ev.Position = g_position;
+
     }
-    //ev.Position = cnt;
-    //ev.Type = pina << 1 | pinb;
-    if (ev.Type != MPUI_NONE) 
-    {
-        BaseType_t task_woken = pdFALSE;
-        xQueueSendToBackFromISR(g_rotaryQueue, &ev, &task_woken);
-        if (task_woken)
-        {
-            portYIELD_FROM_ISR();
-        }
-    }
+
 }
 
 esp_err_t initializeRotary() 
@@ -112,7 +154,7 @@ esp_err_t initializeRotary()
     
     ESP_LOGD(TAG, "Gpio inited");
 
-    uint8_t pinz[] = {ROT_ENC_A_GPIO, ROT_ENC_B_GPIO, ROT_BTN_GPIO};
+    uint8_t pinz[] = {ROT_ENC_A_GPIO, ROT_ENC_B_GPIO};
     for(int i=0; i<sizeof(pinz); i++) 
     {
         gpio_pad_select_gpio(pinz[i]);
@@ -127,6 +169,12 @@ esp_err_t initializeRotary()
             return res;
         };
     }
+    
+    gpio_pad_select_gpio(ROT_BTN_GPIO);
+    gpio_set_pull_mode(ROT_BTN_GPIO, GPIO_PULLUP_ONLY);
+    gpio_set_direction(ROT_BTN_GPIO, GPIO_MODE_INPUT);
+    gpio_set_intr_type(ROT_BTN_GPIO, GPIO_INTR_ANYEDGE);
+    gpio_isr_handler_add(ROT_BTN_GPIO, rotary_btn_isr, NULL);
 
     ESP_LOGD(TAG, "ISR Gpio inited");
 
@@ -142,8 +190,27 @@ void mpuiHandlerTask(void * pvParameters)
         ESP_LOGE(TAG, "Failed to create rot queue");
         return;
     }
+    
+    esp_timer_create_args_t tArgs;
+    tArgs.callback = button_delayed_handler;
+    tArgs.dispatch_method = ESP_TIMER_TASK;
+    esp_err_t res = esp_timer_create(&tArgs, &g_rotBtnTimer);
+    if (res != ESP_OK) {
+        printf("timer 1 init fail");
+        return;
+    }
+
+    tArgs.callback = rotary_encoder_delayed_handler;
+    tArgs.dispatch_method = ESP_TIMER_TASK;
+    res = esp_timer_create(&tArgs, &g_rotEncTimer);
+    if (res != ESP_OK) {
+        printf("timer 2 init fail");
+        return;
+    }
+    
+
     ESP_LOGD(TAG, "configuring rotary");
-    esp_err_t res = initializeRotary();
+    res = initializeRotary();
     if (res != ESP_OK) {
         ESP_LOGE(TAG, "Failed to init rotary %x", res);
         return;
@@ -154,33 +221,32 @@ void mpuiHandlerTask(void * pvParameters)
 
     MPUIEvent event;;
     int pos = 0;
+    unsigned char pina, pinb;
     while (1)
     {
         // Wait for incoming events on the event queue.
         if (xQueueReceive(g_rotaryQueue, &event, IdleDelay) == pdTRUE)
         {
-            if (event.Type == MPUI_BTNPRESS)
+            switch(event.Type) 
             {
-                ESP_LOGD(TAG, "Btn intr, delay %d", (int) (esp_timer_get_time() - event.Us));
-                //xTimerPendFunctionCall(button_change_handler, NULL, 0, pdMS_TO_TICKS(2));
+                case MPUI_BTNDOWN:
+                case MPUI_BTNUP: 
+                    break;
+                case MPUI_BTNPRESS:
+                    ESP_LOGD(TAG, "BTN press");
+                    break;
+                case MPUI_BTNLONGPRESS:
+                    ESP_LOGD(TAG, "BTN long press");
+                    break;
+                case MPUI_UP:
+                case MPUI_DOWN:
+                    
+                    ESP_LOGD(TAG, "Got rotary event %d, pos %d, delay %d", (int) event.Type, event.Position, (int) (esp_timer_get_time() - event.Us));
+
+                    break;
+                default:
+                    break;
             }
-            else 
-            {
-                unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
-                unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
-                uint8_t p0 = pina << 1 | pinb;
-                ESP_LOGD(TAG, "Got rotary event %d - %d, cnt %d, delay %d", (int) event.Type, p0, event.Position, (int) (esp_timer_get_time() - event.Us));
-            }
-            
-            //int8_t d0 = rotary_process(pina, pinb);
-            //int8_t d1 = read_rotary(pina, pinb);
-            //int8_t d2 = read_rotary_2(pina, pinb);
-            //pos += d0;
-            //ESP_LOGD(TAG, "DIR %d %d %d, pos %d", d0, d1, d2, pos);
-            //unsigned char pina = gpio_get_level(ROT_ENC_A_GPIO) ? 1 : 0;
-            //unsigned char pinb = gpio_get_level(ROT_ENC_B_GPIO) ? 1 : 0;
-            //unsigned char dir = rotary_process(pina, pinb);
-            
         }
         else
         {

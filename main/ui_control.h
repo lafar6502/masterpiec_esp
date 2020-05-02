@@ -14,8 +14,11 @@ typedef enum UI_EVENT_TYPE {
     MPUI_NONE,
     MPUI_UP,
     MPUI_DOWN,
-    MPUI_BTNPRESS,
-    MPUI_BTNLONGPRESS,
+    MPUI_BTNDOWN, //button down
+    MPUI_BTNUP,   //button released
+    MPUI_BTNPRESS, //button down+up, short press
+    MPUI_BTNLONGPRESS, //button down+up, long press
+
     MPUI_IDLE
     
 }  UI_EVENT_TYPE;
