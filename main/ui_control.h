@@ -42,4 +42,10 @@ esp_err_t initializeMPUI();
 
 void defaultMPUIEventHandler(MPUIEvent ev);
 
+//return current encoder position
+int32_t getEncoderPos();
+//check if enc button is pressed now
+uint8_t isEncoderButtonPressed();
+
+
 #endif

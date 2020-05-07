@@ -22,8 +22,7 @@ const TickType_t IdleDelay = 5000 / portTICK_PERIOD_MS;
 #define ROT_ENC_A_GPIO (CONFIG_ROT_ENC_A_GPIO)
 #define ROT_ENC_B_GPIO (CONFIG_ROT_ENC_B_GPIO)
 #define ROT_BTN_GPIO (CONFIG_ROT_ENC_BTN_GPIO)
-#define ENABLE_HALF_STEPS false  // Set to true to enable tracking of rotary encoder at half step resolution
-#define RESET_AT          0      // Set to a positive non-zero number to reset the position if this value is exceeded
+
 
 QueueHandle_t g_rotaryQueue;
 esp_timer_handle_t g_rotBtnTimer;
@@ -153,7 +152,6 @@ esp_err_t initializeRotary()
 {
     ESP_LOGD(TAG, "Initializing rotary pin A=%d, pin B=%d, btn=%d", (int) ROT_ENC_A_GPIO, (int) ROT_ENC_B_GPIO, (int) ROT_BTN_GPIO);
     
-    ESP_LOGD(TAG, "Gpio inited");
 
     uint8_t pinz[] = {ROT_ENC_A_GPIO, ROT_ENC_B_GPIO};
     for(int i=0; i<sizeof(pinz); i++) 
@@ -177,7 +175,7 @@ esp_err_t initializeRotary()
     gpio_set_intr_type(ROT_BTN_GPIO, GPIO_INTR_ANYEDGE);
     gpio_isr_handler_add(ROT_BTN_GPIO, rotary_btn_isr, NULL);
 
-    ESP_LOGD(TAG, "ISR Gpio inited");
+    ESP_LOGD(TAG, "Rotary gpio inited");
 
     return ESP_OK;   
 
@@ -279,13 +277,6 @@ esp_err_t initializeMPUI() {
 
 }
 
-//#define FLIP_DIRECTION    0  // Set to true to reverse the clockwise/counterclockwise sense
-
-esp_err_t setupRotaryEncoderInput()
-{
-    
-    return ESP_OK;
-}
 
 
 void defaultMPUIEventHandler(MPUIEvent ev) {
