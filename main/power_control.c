@@ -1,5 +1,6 @@
 #include <stdint.h>
 #include "driver/gpio.h"
+#include "masterp_hal.h"
 #include "power_control.h"
 #include "esp_intr_alloc.h"
 #include "esp_timer.h"

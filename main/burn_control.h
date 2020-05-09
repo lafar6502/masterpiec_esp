@@ -92,6 +92,19 @@ typedef struct BurnStateConfig {
   void (*fLoop)();
 } TBurnStateConfig;
 
+
+
+typedef struct {
+  unsigned long Ms;
+  float Val;
+} TReading;
+
+typedef struct {
+  unsigned long Ms;
+  uint16_t Val;
+} TIntReading;
+
+
 //initialize the burning automatic algorithm
 void initializeBurningLoop();
 //periodically run burn control task to handle automatic burning alg.
