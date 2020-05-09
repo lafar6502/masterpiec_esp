@@ -10,7 +10,7 @@
 
 void initializeBurningLoop() {
   g_TargetTemp = g_CurrentConfig.TCO;
-  g_HomeThermostatOn = true;
+  g_HomeThermostatOn = 1;
   forceState(STATE_P0);
 }
 
@@ -50,7 +50,7 @@ void setAlarm(const char* txt) {
 float g_dT60; //1-minute temp delta
 float g_dTl3; //last 3 readings diff
 
-float interpolate(const TReading& r1, const TReading& r2, unsigned long t0) {
+float interpolate(TReading r1, TReading r2, unsigned long t0) {
   float tdT = r2.Val - r1.Val;
   unsigned long tm0 = r2.Ms - r1.Ms;
   //printf("interpolate (%ld,%f), (%ld, %f) at %ld: dt is %ld\r\n", r1.Ms, r1.Val, r2.Ms, r2.Val, t0, tm0);
@@ -87,11 +87,11 @@ float calcDT60() {
 }
 
 void processSensorValues() {
-  g_TempCO = getLastDallasValue(TSENS_BOILER);
-  g_TempCWU = getLastDallasValue(TSENS_CWU);
-  g_TempPowrot = getLastDallasValue(TSENS_RETURN);
-  g_TempFeeder = getLastDallasValue(TSENS_FEEDER);
-  g_TempZewn = getLastDallasValue(TSENS_EXTERNAL);
+  g_TempCO = getDallasTemp(TSENS_BOILER);
+  g_TempCWU = getDallasTemp(TSENS_CWU);
+  g_TempPowrot = getDallasTemp(TSENS_RETURN);
+  g_TempFeeder = getDallasTemp(TSENS_FEEDER);
+  g_TempZewn = getDallasTemp(TSENS_EXTERNAL);
   g_TempSpaliny = getThermocoupleTemp(T2SENS_EXHAUST);
   g_TempBurner = getThermocoupleTemp(T2SENS_BURNER);
   if (g_CurrentConfig.EnableThermostat) 
