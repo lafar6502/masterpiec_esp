@@ -3,7 +3,7 @@
 #include <string.h>
 #include "ui_control.h"
 #include "ui_view_handler.h"
-
+#include "ui_screen.h"
 
 #define DISPLAY_TEXT_LINES 4
 #define DISPLAY_TEXT_LEN   20

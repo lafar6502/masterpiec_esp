@@ -112,22 +112,6 @@ int printline(const char* txt, int y, int maxh) {
 }
 
 
-void print1s(const char* txt) {
-    SSD1306_Clear( &I2CDisplay, SSD_COLOR_BLACK );
-    printline(txt, 10, 44);
-    SSD1306_Update( &I2CDisplay );
-}
-
-
-void print2s(const char* txt, const char* txt2) {
-    
-    int len = strlen(txt);
-    SSD1306_Clear( &I2CDisplay, SSD_COLOR_BLACK );
-    printline(txt, 0, 32);
-    printline(txt2, 32, 32);
-    SSD1306_Update( &I2CDisplay );
-}
-
 void print4s(const char* t1, const char* t2, const char* t3, const char* t4) {
     int cury = 0;
     int n = 0;
@@ -144,6 +128,20 @@ void print4s(const char* t1, const char* t2, const char* t3, const char* t4) {
     }
     SSD1306_Update( &I2CDisplay );
 }
+
+void print1s(const char* txt) {
+    SSD1306_Clear( &I2CDisplay, SSD_COLOR_BLACK );
+    printline(txt, 10, 44);
+    SSD1306_Update( &I2CDisplay );
+}
+
+
+void print2s(const char* txt, const char* txt2) 
+{
+    
+    print4s(txt, txt2, NULL, NULL);
+}
+
 
 void initializeDisplay2( void ) {
     printf( "Ready...\n" );
