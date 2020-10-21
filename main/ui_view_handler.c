@@ -95,3 +95,15 @@ void changeUIState(char code) {
     }
   }
 }
+
+
+void user_input_event_handler(void *event_handler_arg, esp_event_base_t event_base, int32_t event_id, void *event_data)
+{
+
+}
+
+///rtos task for updating the UI
+void uiUpdateTask() 
+{
+  ESP_ERROR_CHECK(esp_event_handler_register(MPUI_EVENT, ESP_EVENT_ANY_ID, user_input_event_handler, NULL));
+}
